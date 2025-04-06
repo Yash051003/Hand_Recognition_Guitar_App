@@ -42,6 +42,7 @@ h1 {
     height: 100%;
     object-fit: cover;
     border-radius: 10px;
+    transform: scaleX(-1);
 }
 
 .prediction-display {

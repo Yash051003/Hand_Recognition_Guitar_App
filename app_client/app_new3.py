@@ -14,8 +14,10 @@ import numpy as np
 import mediapipe as mp
 
 from utils import CvFpsCalc
-from model import KeyPointClassifier
-from model import PointHistoryClassifier
+
+# Import KeyPointClassifier with correct model path
+from keypoint_classifier import KeyPointClassifier
+
 import redis
 
 
@@ -24,6 +26,53 @@ import websockets
 import cv2
 import base64
 import json
+import os
+import sys
+import tensorflow as tf
+
+# Add current directory to path to find the model module
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(current_dir)
+
+# Define PointHistoryClassifier class here since it's not available
+class PointHistoryClassifier(object):
+    def __init__(
+        self,
+        model_path='point_history_classifier.tflite',
+        score_th=0.5,
+        invalid_value=0,
+        num_threads=1,
+    ):
+        self.interpreter = tf.lite.Interpreter(model_path=model_path,
+                                               num_threads=num_threads)
+
+        self.interpreter.allocate_tensors()
+        self.input_details = self.interpreter.get_input_details()
+        self.output_details = self.interpreter.get_output_details()
+
+        self.score_th = score_th
+        self.invalid_value = invalid_value
+
+    def __call__(
+        self,
+        point_history,
+    ):
+        input_details_tensor_index = self.input_details[0]['index']
+        self.interpreter.set_tensor(
+            input_details_tensor_index,
+            np.array([point_history], dtype=np.float32))
+        self.interpreter.invoke()
+
+        output_details_tensor_index = self.output_details[0]['index']
+
+        result = self.interpreter.get_tensor(output_details_tensor_index)
+
+        result_index = np.argmax(np.squeeze(result))
+
+        if np.squeeze(result)[result_index] < self.score_th:
+            result_index = self.invalid_value
+
+        return result_index
 
 async def process_and_send_landmarks():
     uri = "ws://127.0.0.1:8000/ws/stream/"  # Django WebSocket URL

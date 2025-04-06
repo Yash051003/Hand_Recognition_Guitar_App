@@ -4,6 +4,12 @@ console.log("✅ Script loaded");
 const video = document.getElementById('video-stream');
 const predictionText = document.getElementById("prediction");
 
+// Apply the horizontal flip to the video element
+video.style.transform = "scaleX(-1)"; // This flips the video horizontally
+
+// Initialize welcome message
+predictionText.textContent = "Make a chord gesture";
+
 // Initialize WebSocket connection
 const ws = new WebSocket(`ws://${window.location.host}/ws/stream/`);
 
@@ -17,18 +23,14 @@ ws.onmessage = (event) => {
         console.log("📩 Received from server:", data);
         
         if (data.prediction) {
+            // Update the display with the chord name
             predictionText.textContent = data.prediction;
             
-            // Optional: add visual feedback for detected chords
-            if (data.prediction !== "No chord detected" && 
-                data.prediction !== "No hands detected" &&
-                data.prediction !== "Waiting for hand gestures...") {
-                // Flash the prediction to indicate successful detection
-                predictionText.classList.add('detected');
-                setTimeout(() => {
-                    predictionText.classList.remove('detected');
-                }, 1000);
-            }
+            // Always show visual feedback for detected chords
+            predictionText.classList.add('detected');
+            setTimeout(() => {
+                predictionText.classList.remove('detected');
+            }, 1000);
         } else if (data.error) {
             console.error("❌ Server error:", data.error);
             predictionText.textContent = "Error: " + data.error;
@@ -78,7 +80,12 @@ function startFrameSending() {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
 
+        // Draw the video frame to canvas - apply flip if needed
+        context.translate(canvas.width, 0);
+        context.scale(-1, 1);
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        context.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
+
         const base64Image = canvas.toDataURL('image/jpeg', 0.8); // Lower quality for better performance
 
         ws.send(JSON.stringify({ frame: base64Image }));
