@@ -1,0 +1,31 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Hand Gesture Chord Player</title>
+
+    <!-- ✅ Static CSS with Django static tag -->
+    <link rel="stylesheet" href="{% static 'streamapp/style.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h1>Hand Gesture Guitar Playing App</h1>
+        
+        <div class="video-frame">
+            <!-- ✅ Live webcam video element -->
+            <video id="video-stream" autoplay playsinline></video>
+        </div>
+        
+        <div class="prediction-display">
+            <h2>Predicted Chord:</h2>
+            <p id="prediction">Waiting for input...</p>
+        </div>
+    </div>
+
+    <!-- ✅ Load JavaScript after DOM is ready -->
+    <script src="{% static 'streamapp/script.js' %}"></script>
+</body>
+</html>
