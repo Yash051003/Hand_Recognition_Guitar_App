@@ -172,8 +172,8 @@ class StreamConsumer(AsyncWebsocketConsumer):
         self.current_gestures = {"Left": None, "Right": None}
         
         # Add a cooldown timer to prevent rapid-fire chord detection
-        self.last_chord_time = 0
-        self.chord_cooldown = 0.5 #seconds
+        self.last_chord_time = 0 #seconds
+        self.chord_cooldown = 0.9 #seconds
 
     def initialize_tflite_model(self):
         try:
@@ -217,19 +217,24 @@ class StreamConsumer(AsyncWebsocketConsumer):
                     # Check if we have both hands detected for a chord
                     chord = self.identify_chord()
                     
-                    # Play sound and send message ONLY if chord detected
+                    # Play sound if chord detected
                     if chord:
                         # Run in a separate thread to avoid blocking
                         loop = asyncio.get_event_loop()
                         loop.run_in_executor(None, play_chord_sound, chord)
                         
-                        # Send prediction only when chord is detected
+                        # Only send prediction when chord is actually detected
                         await self.send(text_data=json.dumps({
                             "prediction": chord
                         }))
                         
                         print(f"Current gestures: {self.current_gestures}, Identified chord: {chord}")
-                    # We don't send any message if no chord is detected
+                
+                # Don't send "No chord detected" message
+                # else:
+                #     await self.send(text_data=json.dumps({
+                #         "prediction": "Waiting for hand gestures..."
+                #     }))
             
             # Process raw frame data if no hand data is provided
             elif "frame" in data and "frame_data" not in data:
@@ -268,17 +273,24 @@ class StreamConsumer(AsyncWebsocketConsumer):
                             # Identify chord
                             chord = self.identify_chord()
                             
-                            # Play sound ONLY if chord detected
+                            # Play sound if chord detected
                             if chord:
                                 # Run in a separate thread to avoid blocking
                                 loop = asyncio.get_event_loop()
                                 loop.run_in_executor(None, play_chord_sound, chord)
                                 
-                                # Send message ONLY when chord is detected
+                                # Only send message when chord is detected
+                                
                                 await self.send(text_data=json.dumps({
                                     "prediction": chord
+                                    
                                 }))
-                        # We don't send any message if no chord is detected
+                            
+                        # Don't send messages when no hands are detected
+                        # else:
+                        #     await self.send(text_data=json.dumps({
+                        #         "prediction": "No hands detected"
+                        #     }))
                     except Exception as e:
                         print(f"Error processing frame: {str(e)}")
                         await self.send(text_data=json.dumps({
