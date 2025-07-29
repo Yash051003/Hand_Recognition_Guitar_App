@@ -19,7 +19,7 @@ services:
     healthCheckPath: /
     envVars:
       - key: PYTHON_VERSION
-        value: 3.12.2
+        value: "3.11"
       - key: DJANGO_SETTINGS_MODULE
         value: mlsite.settings
       - key: SECRET_KEY
