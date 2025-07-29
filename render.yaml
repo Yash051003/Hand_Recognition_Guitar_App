@@ -1,0 +1,31 @@
+# render.yaml
+
+services:
+  # A Redis instance for Channels
+  - name: redis
+    type: pserv
+    image: redis
+    # pserv types do not have a startCommand
+
+  # The Django/Daphne Web Service
+  - name: web
+    type: web
+    env: python
+    # Make sure this matches your deployment branch name
+    branch: deployment
+    buildCommand: "./build.sh"
+    # The command to start your ASGI server
+    startCommand: "daphne -b 0.0.0.0 -p $PORT mlsite.asgi:application"
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.2
+      - key: DJANGO_SETTINGS_MODULE
+        value: mlsite.settings
+      - key: SECRET_KEY
+        generateValue: true # Render will generate a random secret key
+      - key: REDIS_URL
+        fromService:
+          type: pserv
+          name: redis
+          property: url
