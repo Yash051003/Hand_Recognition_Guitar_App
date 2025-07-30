@@ -5,7 +5,6 @@ import os
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
-import tensorflow as tf
 import mediapipe as mp
 import sys
 import csv
@@ -14,6 +13,12 @@ import copy
 import asyncio
 import pygame
 from pathlib import Path
+
+try:
+    import tensorflow as tf
+except ImportError:
+    import tflite_runtime.interpreter as tflite
+    # Use tflite for inference instead
 
 # Initialize pygame for sound playback
 pygame.mixer.init()
