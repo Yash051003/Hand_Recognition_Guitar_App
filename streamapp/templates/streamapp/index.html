@@ -6,16 +6,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Hand Gesture Chord Player</title>
-
-    <!-- ✅ Static CSS with Django static tag -->
     <link rel="stylesheet" href="{% static 'streamapp/style.css' %}">
 </head>
 <body>
     <div class="container">
-        <h1>Playing guitar using hand gestures </h1>
+        <h1>Playing guitar using hand gestures</h1>
         
         <div class="video-frame">
-            <!-- ✅ Live webcam video element -->
             <video id="video-stream" autoplay playsinline></video>
         </div>
         
@@ -23,9 +20,457 @@
             <h2>Predicted Chord:</h2>
             <p id="prediction">Waiting for input...</p>
         </div>
+
+        <!-- Want to Learn Playing Section -->
+        <div class="learning-section">
+            <h2>🎸 Want to Learn Playing?</h2>
+            <div class="chord-grid">
+                <!-- Major Chords -->
+                <div class="chord-category">
+                    <h3>Major Chords</h3>
+                    <div class="chord-items">
+                        <div class="chord-card" data-chord="A">
+                            <div class="chord-name">A Major</div>
+                            <div class="gesture-combo">
+                                <span class="left-hand">👈 Thumb + Index</span>
+                                <span class="plus">+</span>
+                                <span class="right-hand">👉 Fist</span>
+                            </div>
+                            <button class="play-chord-btn" data-chord="A">🎵 Play</button>
+                        </div>
+                        <div class="chord-card" data-chord="C">
+                            <div class="chord-name">C Major</div>
+                            <div class="gesture-combo">
+                                <span class="left-hand">👈 Thumb</span>
+                                <span class="plus">+</span>
+                                <span class="right-hand">👉 Thumb + Index + Middle</span>
+                            </div>
+                            <button class="play-chord-btn" data-chord="C">🎵 Play</button>
+                        </div>
+                        <div class="chord-card" data-chord="D">
+                            <div class="chord-name">D Major</div>
+                            <div class="gesture-combo">
+                                <span class="left-hand">👈 Thumb</span>
+                                <span class="plus">+</span>
+                                <span class="right-hand">👉 All Fingers</span>
+                            </div>
+                            <button class="play-chord-btn" data-chord="D">🎵 Play</button>
+                        </div>
+                        <div class="chord-card" data-chord="E">
+                            <div class="chord-name">E Major</div>
+                            <div class="gesture-combo">
+                                <span class="left-hand">👈 Thumb</span>
+                                <span class="plus">+</span>
+                                <span class="right-hand">👉 Fist</span>
+                            </div>
+                            <button class="play-chord-btn" data-chord="E">🎵 Play</button>
+                        </div>
+                        <div class="chord-card" data-chord="G">
+                            <div class="chord-name">G Major</div>
+                            <div class="gesture-combo">
+                                <span class="left-hand">👈 Thumb</span>
+                                <span class="plus">+</span>
+                                <span class="right-hand">👉 Thumb + Index</span>
+                            </div>
+                            <button class="play-chord-btn" data-chord="G">🎵 Play</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Minor Chords -->
+                <div class="chord-category">
+                    <h3>Minor Chords</h3>
+                    <div class="chord-items">
+                        <div class="chord-card" data-chord="Am">
+                            <div class="chord-name">A Minor</div>
+                            <div class="gesture-combo">
+                                <span class="left-hand">👈 Thumb + Index</span>
+                                <span class="plus">+</span>
+                                <span class="right-hand">👉 Thumb</span>
+                            </div>
+                            <button class="play-chord-btn" data-chord="Am">🎵 Play</button>
+                        </div>
+                        <div class="chord-card" data-chord="Dm">
+                            <div class="chord-name">D Minor</div>
+                            <div class="gesture-combo">
+                                <span class="left-hand">👈 Thumb + Index</span>
+                                <span class="plus">+</span>
+                                <span class="right-hand">👉 All Fingers</span>
+                            </div>
+                            <button class="play-chord-btn" data-chord="Dm">🎵 Play</button>
+                        </div>
+                        <div class="chord-card" data-chord="Em">
+                            <div class="chord-name">E Minor</div>
+                            <div class="gesture-combo">
+                                <span class="left-hand">👈 Thumb</span>
+                                <span class="plus">+</span>
+                                <span class="right-hand">👉 Thumb</span>
+                            </div>
+                            <button class="play-chord-btn" data-chord="Em">🎵 Play</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="instructions">
+                <h3>📋 How to Play:</h3>
+                <ol>
+                    <li>Click "🔊 Enable Audio" button first</li>
+                    <li>Position both hands in front of the camera</li>
+                    <li>Make the left hand gesture with your left hand</li>
+                    <li>Make the right hand gesture with your right hand</li>
+                    <li>Hold both gestures simultaneously to play the chord</li>
+                    <li>Practice the chord progressions shown above!</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Audio Enable Button (required for autoplay policies) -->
+        <button id="enable-audio" class="audio-btn">🔊 Enable Audio</button>
     </div>
 
-    <!-- ✅ Load JavaScript after DOM is ready -->
+    <!-- Preload all chord audio files - MATCH YOUR ORIGINAL FILE NAMES -->
+    <div id="audio-container" style="display: none;">
+        <!-- Major Chords -->
+        <audio id="chord-A" preload="auto"><source src="{% static 'streamapp/chords/major/A.mp3' %}" type="audio/mpeg"></audio>
+        <audio id="chord-B" preload="auto"><source src="{% static 'streamapp/chords/major/B.mp3' %}" type="audio/mpeg"></audio>
+        <audio id="chord-C" preload="auto"><source src="{% static 'streamapp/chords/major/C.mp3' %}" type="audio/mpeg"></audio>
+        <audio id="chord-D" preload="auto"><source src="{% static 'streamapp/chords/major/D.mp3' %}" type="audio/mpeg"></audio>
+        <audio id="chord-E" preload="auto"><source src="{% static 'streamapp/chords/major/E.mp3' %}" type="audio/mpeg"></audio>
+        <audio id="chord-F" preload="auto"><source src="{% static 'streamapp/chords/major/F.mp3' %}" type="audio/mpeg"></audio>
+        <audio id="chord-G" preload="auto"><source src="{% static 'streamapp/chords/major/G.mp3' %}" type="audio/mpeg"></audio>
+        
+        <!-- Minor Chords -->
+        <audio id="chord-Am" preload="auto"><source src="{% static 'streamapp/chords/minor/Am.mp3' %}" type="audio/mpeg"></audio>
+        <audio id="chord-Bm" preload="auto"><source src="{% static 'streamapp/chords/minor/Bm.mp3' %}" type="audio/mpeg"></audio>
+        <audio id="chord-Cm" preload="auto"><source src="{% static 'streamapp/chords/minor/Cm.mp3' %}" type="audio/mpeg"></audio>
+        <audio id="chord-Dm" preload="auto"><source src="{% static 'streamapp/chords/minor/Dm.mp3' %}" type="audio/mpeg"></audio>
+        <audio id="chord-Em" preload="auto"><source src="{% static 'streamapp/chords/minor/Em.mp3' %}" type="audio/mpeg"></audio>
+        <audio id="chord-Fm" preload="auto"><source src="{% static 'streamapp/chords/minor/Fm.mp3' %}" type="audio/mpeg"></audio>
+        <audio id="chord-Gm" preload="auto"><source src="{% static 'streamapp/chords/minor/Gm.mp3' %}" type="audio/mpeg"></audio>
+        
+        <!-- Flat Chords  -->
+        <audio id="chord-Ab" preload="auto"><source src="{% static 'streamapp/chords/flat/Aflat.mp3' %}" type="audio/mpeg"></audio>
+        <audio id="chord-Bb" preload="auto"><source src="{% static 'streamapp/chords/flat/Bflat.mp3' %}" type="audio/mpeg"></audio>
+        <audio id="chord-Db" preload="auto"><source src="{% static 'streamapp/chords/flat/Dflat.mp3' %}" type="audio/mpeg"></audio>
+        <audio id="chord-Eb" preload="auto"><source src="{% static 'streamapp/chords/flat/Eflat.mp3' %}" type="audio/mpeg"></audio>
+        <audio id="chord-Gb" preload="auto"><source src="{% static 'streamapp/chords/flat/Gflat.mp3' %}" type="audio/mpeg"></audio>
+        
+        <!-- Sharp Chords -->
+        <audio id="chord-As" preload="auto"><source src="{% static 'streamapp/chords/sharp/Asharp.mp3' %}" type="audio/mpeg"></audio>
+        <audio id="chord-Cs" preload="auto"><source src="{% static 'streamapp/chords/sharp/Csharp.mp3' %}" type="audio/mpeg"></audio>
+        <audio id="chord-Ds" preload="auto"><source src="{% static 'streamapp/chords/sharp/Dsharp.mp3' %}" type="audio/mpeg"></audio>
+        <audio id="chord-Fs" preload="auto"><source src="{% static 'streamapp/chords/sharp/Fsharp.mp3' %}" type="audio/mpeg"></audio>
+        <audio id="chord-Gs" preload="auto"><source src="{% static 'streamapp/chords/sharp/Gsharp.mp3' %}" type="audio/mpeg"></audio>
+    </div>
+
     <script src="{% static 'streamapp/script.js' %}"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+            color: #fff;
+            text-align: center;
+        }
+
+        .container {
+            padding: 20px;
+            margin: auto;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        .video-frame {
+            margin: 20px auto;
+            width: 100%;
+            max-width: 640px;
+            aspect-ratio: 4 / 3;
+            background-color: #000;
+            border: 5px solid #4db8ff;
+            border-radius: 15px;
+            box-shadow: 0 0 20px #00bfff;
+            animation: pulseBorder 2s infinite;
+            overflow: hidden;
+        }
+
+        @keyframes pulseBorder {
+            0% { box-shadow: 0 0 10px #00bfff; }
+            50% { box-shadow: 0 0 20px #00bfff; }
+            100% { box-shadow: 0 0 10px #00bfff; }
+        }
+
+        #video-stream {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        .prediction-display {
+            margin-top: 30px;
+            padding: 0 10px;
+        }
+
+        #prediction {
+            font-size: 2em;
+            font-weight: bold;
+            color: #00ff99;
+            animation: fadeIn 1s ease-in-out;
+            word-wrap: break-word;
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        .audio-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .audio-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+        
+        .audio-btn.enabled {
+            background: #2196F3;
+        }
+        
+        .audio-btn.enabled:hover {
+            background: #1976D2;
+        }
+        
+        .prediction-display p.detected {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            animation: pulse 0.5s ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Learning Section Styles - Updated Colors to Match Theme */
+        .learning-section {
+            margin-top: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, #203a43 0%, #2c5364 50%, #0f2027 100%);
+            border-radius: 15px;
+            color: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 2px solid #4db8ff;
+        }
+
+        .learning-section h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            color: #00bfff;
+        }
+
+        .chord-grid {
+            display: grid;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .chord-category {
+            background: rgba(77, 184, 255, 0.1);
+            border-radius: 12px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(77, 184, 255, 0.3);
+        }
+
+        .chord-category h3 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            color: #00ff99;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+        }
+
+        .chord-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .chord-card {
+            background: rgba(32, 58, 67, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(77, 184, 255, 0.5);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .chord-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 191, 255, 0.3);
+            background: rgba(32, 58, 67, 0.9);
+            border-color: #00bfff;
+        }
+
+        .chord-name {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #00bfff;
+        }
+
+        .gesture-combo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            flex-wrap: wrap;
+        }
+
+        .left-hand, .right-hand {
+            background: rgba(0, 255, 153, 0.2);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            border: 1px solid rgba(0, 255, 153, 0.5);
+            color: #00ff99;
+        }
+
+        .plus {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #00bfff;
+        }
+
+        .play-chord-btn {
+            background: linear-gradient(45deg, #00bfff, #4db8ff);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 191, 255, 0.3);
+        }
+
+        .play-chord-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 191, 255, 0.5);
+            background: linear-gradient(45deg, #4db8ff, #00bfff);
+        }
+
+        .play-chord-btn:active {
+            transform: translateY(0);
+        }
+
+        .instructions {
+            background: rgba(15, 32, 39, 0.8);
+            border-radius: 12px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(77, 184, 255, 0.3);
+        }
+
+        .instructions h3 {
+            margin-bottom: 20px;
+            font-size: 1.6rem;
+            color: #00ff99;
+            text-align: center;
+        }
+
+        .instructions ol {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 10px;
+            color: rgba(255,255,255,0.9);
+        }
+
+        /* Responsive tweaks for smaller screens */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            .video-frame {
+                max-width: 90%;
+                height: auto;
+                aspect-ratio: 4 / 3;
+            }
+
+            #prediction {
+                font-size: 1.5em;
+            }
+
+            .learning-section {
+                padding: 20px;
+                margin-top: 20px;
+            }
+
+            .learning-section h2 {
+                font-size: 2rem;
+            }
+
+            .chord-items {
+                grid-template-columns: 1fr;
+            }
+
+            .gesture-combo {
+                font-size: 0.8rem;
+            }
+
+            .instructions ol {
+                font-size: 1rem;
+                padding-left: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .prediction-display h2 {
+                font-size: 1.2em;
+            }
+
+            #prediction {
+                font-size: 1.2em;
+            }
+        }
+    </style>
 </body>
 </html>
