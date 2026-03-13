@@ -1,31 +1,186 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Hand Gesture Chord Player</title>
-
-    <!-- ✅ Static CSS with Django static tag -->
+    <title>Acoustic Hands — Play</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Outfit:wght@200;300;400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'streamapp/style.css' %}">
 </head>
 <body>
-    <div class="container">
-        <h1>Playing guitar using hand gestures </h1>
-        
+    <nav class="app-nav">
+        <a href="/" class="nav-logo">← Acoustic Hands</a>
+        <button id="enable-audio" class="audio-btn" onclick="unlockAudio()">🔊 Enable Audio</button>
+    </nav>
+
+    <div class="app-container">
         <div class="video-frame">
-            <!-- ✅ Live webcam video element -->
             <video id="video-stream" autoplay playsinline></video>
+            <div class="video-overlay">
+                <div class="corner top-left"></div>
+                <div class="corner top-right"></div>
+                <div class="corner bottom-left"></div>
+                <div class="corner bottom-right"></div>
+            </div>
         </div>
-        
+
         <div class="prediction-display">
-            <h2>Predicted Chord:</h2>
-            <p id="prediction">Waiting for input...</p>
+            <div class="prediction-label">Detected Chord</div>
+            <p id="prediction">Position both hands in frame</p>
         </div>
     </div>
 
-    <!-- ✅ Load JavaScript after DOM is ready -->
+    <div id="audio-container" style="display:none;">
+        <audio id="chord-A"  preload="auto"><source src="{% static 'streamapp/chords/major/A.mp3' %}"      type="audio/mpeg"></audio>
+        <audio id="chord-B"  preload="auto"><source src="{% static 'streamapp/chords/major/B.mp3' %}"      type="audio/mpeg"></audio>
+        <audio id="chord-C"  preload="auto"><source src="{% static 'streamapp/chords/major/C.mp3' %}"      type="audio/mpeg"></audio>
+        <audio id="chord-D"  preload="auto"><source src="{% static 'streamapp/chords/major/D.mp3' %}"      type="audio/mpeg"></audio>
+        <audio id="chord-E"  preload="auto"><source src="{% static 'streamapp/chords/major/E.mp3' %}"      type="audio/mpeg"></audio>
+        <audio id="chord-F"  preload="auto"><source src="{% static 'streamapp/chords/major/F.mp3' %}"      type="audio/mpeg"></audio>
+        <audio id="chord-G"  preload="auto"><source src="{% static 'streamapp/chords/major/G.mp3' %}"      type="audio/mpeg"></audio>
+        <audio id="chord-Am" preload="auto"><source src="{% static 'streamapp/chords/minor/Am.mp3' %}"     type="audio/mpeg"></audio>
+        <audio id="chord-Bm" preload="auto"><source src="{% static 'streamapp/chords/minor/Bm.mp3' %}"     type="audio/mpeg"></audio>
+        <audio id="chord-Cm" preload="auto"><source src="{% static 'streamapp/chords/minor/Cm.mp3' %}"     type="audio/mpeg"></audio>
+        <audio id="chord-Dm" preload="auto"><source src="{% static 'streamapp/chords/minor/Dm.mp3' %}"     type="audio/mpeg"></audio>
+        <audio id="chord-Em" preload="auto"><source src="{% static 'streamapp/chords/minor/Em.mp3' %}"     type="audio/mpeg"></audio>
+        <audio id="chord-Fm" preload="auto"><source src="{% static 'streamapp/chords/minor/Fm.mp3' %}"     type="audio/mpeg"></audio>
+        <audio id="chord-Gm" preload="auto"><source src="{% static 'streamapp/chords/minor/Gm.mp3' %}"     type="audio/mpeg"></audio>
+        <audio id="chord-Ab" preload="auto"><source src="{% static 'streamapp/chords/flat/Aflat.mp3' %}"   type="audio/mpeg"></audio>
+        <audio id="chord-Bb" preload="auto"><source src="{% static 'streamapp/chords/flat/Bflat.mp3' %}"   type="audio/mpeg"></audio>
+        <audio id="chord-Db" preload="auto"><source src="{% static 'streamapp/chords/flat/Dflat.mp3' %}"   type="audio/mpeg"></audio>
+        <audio id="chord-Eb" preload="auto"><source src="{% static 'streamapp/chords/flat/Eflat.mp3' %}"   type="audio/mpeg"></audio>
+        <audio id="chord-Gb" preload="auto"><source src="{% static 'streamapp/chords/flat/Gflat.mp3' %}"   type="audio/mpeg"></audio>
+        <audio id="chord-As" preload="auto"><source src="{% static 'streamapp/chords/sharp/Asharp.mp3' %}" type="audio/mpeg"></audio>
+        <audio id="chord-Cs" preload="auto"><source src="{% static 'streamapp/chords/sharp/Csharp.mp3' %}" type="audio/mpeg"></audio>
+        <audio id="chord-Ds" preload="auto"><source src="{% static 'streamapp/chords/sharp/Dsharp.mp3' %}" type="audio/mpeg"></audio>
+        <audio id="chord-Fs" preload="auto"><source src="{% static 'streamapp/chords/sharp/Fsharp.mp3' %}" type="audio/mpeg"></audio>
+        <audio id="chord-Gs" preload="auto"><source src="{% static 'streamapp/chords/sharp/Gsharp.mp3' %}" type="audio/mpeg"></audio>
+    </div>
+
+    <script>
+        window.audioEnabled = false;
+        var chordElementMap = {
+            "A":"chord-A","B":"chord-B","C":"chord-C","D":"chord-D",
+            "E":"chord-E","F":"chord-F","G":"chord-G",
+            "Am":"chord-Am","Bm":"chord-Bm","Cm":"chord-Cm","Dm":"chord-Dm",
+            "Em":"chord-Em","Fm":"chord-Fm","Gm":"chord-Gm",
+            "A\u266d":"chord-Ab","B\u266d":"chord-Bb","D\u266d":"chord-Db",
+            "E\u266d":"chord-Eb","G\u266d":"chord-Gb",
+            "A#":"chord-As","C#":"chord-Cs","D#":"chord-Ds",
+            "F#":"chord-Fs","G#":"chord-Gs"
+        };
+
+        function unlockAudio() {
+            if (window.audioEnabled) return;
+            var ctx = new (window.AudioContext || window.webkitAudioContext)();
+            ctx.resume().then(function() {
+                var buf = ctx.createBuffer(1,1,22050);
+                var src = ctx.createBufferSource();
+                src.buffer = buf; src.connect(ctx.destination); src.start(0);
+                window.audioEnabled = true;
+                var btn = document.getElementById('enable-audio');
+                btn.textContent = "Audio On"; btn.classList.add('enabled');
+                console.log("Audio unlocked");
+            });
+        }
+
+        var lastChord = null, lastPlayTime = 0;
+        function playChordSound(chord) {
+            if (!window.audioEnabled) return;
+            var now = Date.now();
+            if (chord === lastChord && now - lastPlayTime < 1000) return;
+            var id = chordElementMap[chord];
+            if (!id) return;
+            var el = document.getElementById(id);
+            if (!el) return;
+            document.querySelectorAll('#audio-container audio').forEach(function(a){ a.pause(); a.currentTime=0; });
+            el.currentTime = 0; el.volume = 0.9;
+            el.play().then(function(){ lastChord=chord; lastPlayTime=now; }).catch(function(){});
+        }
+    </script>
+
     <script src="{% static 'streamapp/script.js' %}"></script>
+
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #0a0a0f;
+            color: #f5f0e8;
+            min-height: 100vh;
+            display: flex; flex-direction: column;
+        }
+        .app-nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 40px;
+            border-bottom: 1px solid rgba(201,168,76,0.1);
+            background: rgba(10,10,15,0.95);
+            backdrop-filter: blur(20px);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .nav-logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem; color: rgba(201,168,76,0.8);
+            text-decoration: none; letter-spacing: 0.05em;
+            transition: color 0.3s;
+        }
+        .nav-logo:hover { color: #c9a84c; }
+        .audio-btn {
+            background: transparent;
+            border: 1px solid rgba(201,168,76,0.3);
+            color: rgba(201,168,76,0.7);
+            padding: 8px 20px; border-radius: 4px;
+            cursor: pointer; font-family: 'Outfit', sans-serif;
+            font-size: 0.8rem; letter-spacing: 0.1em;
+            transition: all 0.3s;
+        }
+        .audio-btn:hover { border-color: #c9a84c; color: #c9a84c; }
+        .audio-btn.enabled { background: rgba(201,168,76,0.1); color: #c9a84c; border-color: #c9a84c; }
+        .app-container {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 48px 24px; gap: 40px;
+        }
+        .video-frame {
+            position: relative;
+            width: 100%; max-width: 700px;
+            aspect-ratio: 4/3;
+            border-radius: 8px; overflow: hidden;
+            background: #000;
+        }
+        .video-frame::before {
+            content: '';
+            position: absolute; inset: 0; z-index: 1;
+            background: radial-gradient(ellipse at center, transparent 60%, rgba(10,10,15,0.4) 100%);
+            pointer-events: none;
+        }
+        #video-stream {
+            width: 100%; height: 100%; object-fit: cover;
+            display: block;
+        }
+        .video-overlay {
+            position: absolute; inset: 0; z-index: 2; pointer-events: none;
+        }
+        .corner {
+            position: absolute; width: 20px; height: 20px;
+        }
+        .corner.top-left    { top:12px;    left:12px;   border-top: 2px solid #c9a84c; border-left: 2px solid #c9a84c; }
+        .corner.top-right   { top:12px;    right:12px;  border-top: 2px solid #c9a84c; border-right: 2px solid #c9a84c; }
+        .corner.bottom-left { bottom:12px; left:12px;   border-bottom: 2px solid #c9a84c; border-left: 2px solid #c9a84c; }
+        .corner.bottom-right{ bottom:12px; right:12px;  border-bottom: 2px solid #c9a84c; border-right: 2px solid #c9a84c; }
+        .prediction-display { text-align: center; }
+        .prediction-label {
+            font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase;
+            color: rgba(201,168,76,0.5); margin-bottom: 12px;
+        }
+        #prediction {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 300; color: #f5f0e8;
+            line-height: 1; transition: color 0.3s;
+        }
+        #prediction.detected { color: #c9a84c; }
+    </style>
 </body>
 </html>
