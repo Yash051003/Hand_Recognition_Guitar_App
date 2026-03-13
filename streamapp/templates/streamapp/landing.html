@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acoustic Hands</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Outfit:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0a0a0f;
+    --paper: #f5f0e8;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --amber: #8b5e1a;
+    --cream: #faf6ef;
+    --muted: #6b6560;
+    --accent: #1a3a5c;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--ink);
+    color: var(--paper);
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    position: fixed; width: 8px; height: 8px;
+    background: var(--gold); border-radius: 50%;
+    pointer-events: none; z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.1s;
+  }
+  .cursor-ring {
+    position: fixed; width: 36px; height: 36px;
+    border: 1px solid rgba(201,168,76,0.4); border-radius: 50%;
+    pointer-events: none; z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: all 0.15s ease;
+  }
+
+  /* Noise overlay */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 1; opacity: 0.3;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: 24px 60px;
+    display: flex; justify-content: space-between; align-items: center;
+    background: linear-gradient(to bottom, rgba(10,10,15,0.95), transparent);
+    backdrop-filter: blur(2px);
+  }
+  .nav-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.5rem; font-weight: 600;
+    letter-spacing: 0.08em; color: var(--gold);
+  }
+  .nav-links { display: flex; gap: 40px; }
+  .nav-links a {
+    font-size: 0.78rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: rgba(245,240,232,0.6); text-decoration: none;
+    transition: color 0.3s;
+  }
+  .nav-links a:hover { color: var(--gold); }
+
+  /* HERO */
+  #hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    text-align: center;
+    position: relative; overflow: hidden;
+    padding: 120px 40px 80px;
+  }
+
+  .hero-bg {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 40%, #1a0f00 0%, #0a0a0f 70%);
+  }
+
+  .hero-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    animation: orb-drift 8s ease-in-out infinite alternate;
+  }
+  .orb-1 {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(201,168,76,0.12) 0%, transparent 70%);
+    top: -100px; left: -100px;
+    animation-delay: 0s;
+  }
+  .orb-2 {
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(26,58,92,0.2) 0%, transparent 70%);
+    bottom: -50px; right: -50px;
+    animation-delay: -4s;
+  }
+  .orb-3 {
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(139,94,26,0.15) 0%, transparent 70%);
+    top: 50%; left: 60%;
+    animation-delay: -2s;
+  }
+
+  @keyframes orb-drift {
+    from { transform: translate(0, 0) scale(1); }
+    to { transform: translate(30px, 20px) scale(1.1); }
+  }
+
+  /* Decorative lines */
+  .hero-lines {
+    position: absolute; inset: 0; pointer-events: none;
+    overflow: hidden;
+  }
+  .hero-lines::before, .hero-lines::after {
+    content: '';
+    position: absolute;
+    border: 1px solid rgba(201,168,76,0.06);
+    border-radius: 50%;
+  }
+  .hero-lines::before {
+    width: 700px; height: 700px;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .hero-lines::after {
+    width: 500px; height: 500px;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .hero-content { position: relative; z-index: 2; max-width: 900px; }
+
+  .hero-eyebrow {
+    display: inline-block;
+    font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--gold);
+    border: 1px solid rgba(201,168,76,0.3);
+    padding: 6px 20px; border-radius: 100px;
+    margin-bottom: 40px;
+    animation: fade-up 1s ease both;
+  }
+
+  h1.hero-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(4rem, 10vw, 8.5rem);
+    font-weight: 300; line-height: 0.95;
+    letter-spacing: -0.02em;
+    animation: fade-up 1s 0.15s ease both;
+  }
+  h1.hero-title em {
+    font-style: italic; color: var(--gold);
+    display: block;
+  }
+
+  .hero-subtitle {
+    margin-top: 32px;
+    font-size: 1.05rem; font-weight: 300;
+    color: rgba(245,240,232,0.55); line-height: 1.7;
+    max-width: 560px; margin-left: auto; margin-right: auto;
+    animation: fade-up 1s 0.3s ease both;
+  }
+
+  .hero-cta {
+    margin-top: 60px;
+    animation: fade-up 1s 0.45s ease both;
+    display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--gold);
+    color: var(--ink);
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85rem; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 18px 44px; border-radius: 4px;
+    text-decoration: none;
+    transition: all 0.3s;
+    position: relative; overflow: hidden;
+  }
+  .btn-primary::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .btn-primary:hover { background: var(--gold-light); transform: translateY(-2px); box-shadow: 0 20px 40px rgba(201,168,76,0.25); }
+  .btn-primary:hover::before { opacity: 1; }
+
+  .btn-secondary {
+    display: inline-flex; align-items: center; gap: 10px;
+    border: 1px solid rgba(245,240,232,0.2);
+    color: rgba(245,240,232,0.7);
+    font-size: 0.85rem; font-weight: 400;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 18px 44px; border-radius: 4px;
+    text-decoration: none;
+    transition: all 0.3s;
+  }
+  .btn-secondary:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-2px); }
+
+  .scroll-hint {
+    position: absolute; bottom: 40px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    color: rgba(245,240,232,0.3); font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase;
+    animation: fade-up 1s 0.8s ease both;
+  }
+  .scroll-hint-line {
+    width: 1px; height: 50px;
+    background: linear-gradient(to bottom, rgba(201,168,76,0.5), transparent);
+    animation: scroll-line 2s ease-in-out infinite;
+  }
+  @keyframes scroll-line {
+    0% { transform: scaleY(0); transform-origin: top; }
+    50% { transform: scaleY(1); transform-origin: top; }
+    51% { transform: scaleY(1); transform-origin: bottom; }
+    100% { transform: scaleY(0); transform-origin: bottom; }
+  }
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* SECTION BASE */
+  section { position: relative; }
+
+  .section-inner {
+    max-width: 1200px; margin: 0 auto;
+    padding: 140px 60px;
+  }
+
+  .section-label {
+    font-size: 0.65rem; letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 24px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .section-label::after {
+    content: ''; flex: 1; max-width: 60px;
+    height: 1px; background: var(--gold); opacity: 0.4;
+  }
+
+  /* ABOUT SECTION */
+  #about {
+    background: var(--ink);
+  }
+  #about .section-inner {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 100px; align-items: center;
+  }
+
+  .about-text h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2.5rem, 4vw, 3.8rem);
+    font-weight: 400; line-height: 1.15;
+    margin-bottom: 32px;
+  }
+  .about-text h2 span { color: var(--gold); }
+  .about-text p {
+    font-size: 0.95rem; line-height: 1.9;
+    color: rgba(245,240,232,0.55); margin-bottom: 20px;
+  }
+
+  .about-visual {
+    position: relative;
+  }
+  .about-card {
+    background: linear-gradient(135deg, rgba(201,168,76,0.08) 0%, rgba(26,58,92,0.08) 100%);
+    border: 1px solid rgba(201,168,76,0.15);
+    border-radius: 12px; padding: 48px;
+    backdrop-filter: blur(10px);
+  }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+  .stat-item { text-align: center; padding: 24px; }
+  .stat-number {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 3.5rem; font-weight: 300; color: var(--gold);
+    display: block; line-height: 1;
+  }
+  .stat-label {
+    font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: rgba(245,240,232,0.4); margin-top: 8px; display: block;
+  }
+
+  /* HOW IT WORKS */
+  #how {
+    background: linear-gradient(180deg, var(--ink) 0%, #0d0a05 100%);
+  }
+  #how .section-inner { text-align: center; }
+  #how h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2.5rem, 4vw, 3.8rem);
+    font-weight: 400; line-height: 1.15;
+    margin-bottom: 80px;
+  }
+  #how h2 span { color: var(--gold); }
+
+  .steps-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px;
+    border: 1px solid rgba(201,168,76,0.1); border-radius: 12px; overflow: hidden;
+  }
+  .step-item {
+    padding: 56px 40px;
+    background: rgba(201,168,76,0.03);
+    border-right: 1px solid rgba(201,168,76,0.1);
+    transition: background 0.4s;
+    text-align: left;
+  }
+  .step-item:last-child { border-right: none; }
+  .step-item:hover { background: rgba(201,168,76,0.07); }
+
+  .step-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 4rem; font-weight: 300;
+    color: rgba(201,168,76,0.2); line-height: 1;
+    margin-bottom: 24px; display: block;
+  }
+  .step-title {
+    font-size: 1.1rem; font-weight: 500;
+    margin-bottom: 12px; color: var(--paper);
+  }
+  .step-desc {
+    font-size: 0.88rem; line-height: 1.8;
+    color: rgba(245,240,232,0.45);
+  }
+
+  /* FUTURE SECTION */
+  #future {
+    background: linear-gradient(180deg, #0d0a05 0%, #060810 100%);
+  }
+  #future .section-inner { }
+  #future .section-header {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 80px;
+    margin-bottom: 80px; align-items: end;
+  }
+  #future h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2.5rem, 4vw, 3.8rem);
+    font-weight: 400; line-height: 1.15;
+  }
+  #future h2 span { color: var(--gold); }
+  #future .section-header p {
+    font-size: 0.95rem; line-height: 1.9;
+    color: rgba(245,240,232,0.5);
+    align-self: end;
+  }
+
+  .roadmap {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;
+  }
+  .roadmap-item {
+    border: 1px solid rgba(201,168,76,0.12);
+    border-radius: 8px; padding: 40px;
+    position: relative; overflow: hidden;
+    transition: all 0.4s;
+    background: rgba(10,10,15,0.8);
+  }
+  .roadmap-item::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity: 0; transition: opacity 0.4s;
+  }
+  .roadmap-item:hover { border-color: rgba(201,168,76,0.3); transform: translateY(-4px); }
+  .roadmap-item:hover::before { opacity: 1; }
+
+  .roadmap-tag {
+    font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 16px;
+    padding: 4px 12px; border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 100px; display: inline-block;
+  }
+  .roadmap-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.6rem; font-weight: 400;
+    margin-bottom: 12px; color: var(--paper);
+  }
+  .roadmap-desc {
+    font-size: 0.88rem; line-height: 1.8;
+    color: rgba(245,240,232,0.45);
+  }
+  .roadmap-icon {
+    position: absolute; bottom: 24px; right: 32px;
+    font-size: 3rem; opacity: 0.07;
+  }
+
+  /* CTA SECTION */
+  #cta {
+    background: linear-gradient(180deg, #060810 0%, var(--ink) 100%);
+    text-align: center;
+  }
+  #cta .section-inner { padding: 160px 60px; }
+
+  .cta-tag {
+    display: inline-block;
+    font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--gold); border: 1px solid rgba(201,168,76,0.3);
+    padding: 6px 20px; border-radius: 100px; margin-bottom: 48px;
+  }
+  #cta h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(3rem, 7vw, 6.5rem);
+    font-weight: 300; line-height: 1.05;
+    margin-bottom: 24px;
+  }
+  #cta h2 span { color: var(--gold); font-style: italic; }
+  #cta p {
+    font-size: 1rem; color: rgba(245,240,232,0.45);
+    max-width: 500px; margin: 0 auto 56px; line-height: 1.8;
+  }
+
+  .play-btn {
+    display: inline-flex; align-items: center; gap: 16px;
+    background: transparent;
+    border: 1px solid rgba(201,168,76,0.4);
+    color: var(--gold);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem; font-weight: 400;
+    letter-spacing: 0.05em;
+    padding: 22px 60px; border-radius: 4px;
+    text-decoration: none;
+    transition: all 0.4s;
+    position: relative; overflow: hidden;
+  }
+  .play-btn::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: var(--gold);
+    transform: scaleX(0); transform-origin: left;
+    transition: transform 0.4s cubic-bezier(0.76, 0, 0.24, 1);
+    z-index: 0;
+  }
+  .play-btn:hover { color: var(--ink); border-color: var(--gold); }
+  .play-btn:hover::before { transform: scaleX(1); }
+  .play-btn span, .play-btn svg { position: relative; z-index: 1; }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid rgba(245,240,232,0.06);
+    padding: 40px 60px;
+    display: flex; justify-content: space-between; align-items: center;
+    max-width: 100%;
+  }
+  footer .footer-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem; color: rgba(245,240,232,0.4);
+  }
+  footer p {
+    font-size: 0.72rem; color: rgba(245,240,232,0.25);
+    letter-spacing: 0.1em;
+  }
+
+  /* REVEAL ANIMATIONS */
+  .reveal {
+    opacity: 0; transform: translateY(40px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal.visible {
+    opacity: 1; transform: translateY(0);
+  }
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.2s; }
+  .reveal-delay-3 { transition-delay: 0.3s; }
+  .reveal-delay-4 { transition-delay: 0.4s; }
+
+  /* DIVIDER */
+  .gold-divider {
+    width: 60px; height: 1px;
+    background: linear-gradient(90deg, var(--gold), transparent);
+    margin: 0 auto 40px;
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    nav { padding: 20px 24px; }
+    .nav-links { display: none; }
+    .section-inner { padding: 80px 24px; }
+    #about .section-inner { grid-template-columns: 1fr; gap: 48px; }
+    .steps-grid { grid-template-columns: 1fr; }
+    .step-item { border-right: none; border-bottom: 1px solid rgba(201,168,76,0.1); }
+    #future .section-header { grid-template-columns: 1fr; gap: 24px; }
+    .roadmap { grid-template-columns: 1fr; }
+    footer { flex-direction: column; gap: 16px; text-align: center; padding: 32px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursor-ring"></div>
+
+<nav>
+  <div class="nav-logo">Acoustic Hands</div>
+  <div class="nav-links">
+    <a href="#about">About</a>
+    <a href="#how">How It Works</a>
+    <a href="#future">Vision</a>
+    <a href="/app/">Launch App</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-orb orb-1"></div>
+  <div class="hero-orb orb-2"></div>
+  <div class="hero-orb orb-3"></div>
+  <div class="hero-lines"></div>
+
+  <div class="hero-content">
+    <div class="hero-eyebrow">AI-Powered Music &nbsp;·&nbsp; Gesture Recognition</div>
+    <h1 class="hero-title">
+      Acoustic
+      <em>Hands</em>
+    </h1>
+    <p class="hero-subtitle">
+      Your hands are the instrument. No guitar required —
+      just the language of gesture, translated into music in real time.
+    </p>
+    <div class="hero-cta">
+      <a href="/app/" class="btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        Play Guitar
+      </a>
+      <a href="#about" class="btn-secondary">Learn More</a>
+    </div>
+  </div>
+
+  <div class="scroll-hint">
+    <div class="scroll-hint-line"></div>
+    Scroll
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="section-inner">
+    <div class="about-text">
+      <div class="section-label reveal">What We Built</div>
+      <h2 class="reveal reveal-delay-1">
+        Music through <span>the movement</span> of hands
+      </h2>
+      <p class="reveal reveal-delay-2">
+        Acoustic Hands is a real-time hand gesture recognition system that translates 
+        finger positions into guitar chords — no physical instrument needed. 
+        Using computer vision and deep learning, we track 21 hand landmarks per hand 
+        and classify them into musical gestures.
+      </p>
+      <p class="reveal reveal-delay-3">
+        The system processes live webcam footage through a MediaPipe hand tracking 
+        pipeline, feeds the landmark data into a trained TensorFlow Lite classifier, 
+        and maps two-hand gesture combinations to a library of 24 chords, played 
+        instantly via preloaded audio.
+      </p>
+    </div>
+
+    <div class="about-visual reveal reveal-delay-2">
+      <div class="about-card">
+        <div class="stat-grid">
+          <div class="stat-item">
+            <span class="stat-number">24</span>
+            <span class="stat-label">Chord Mappings</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">21</span>
+            <span class="stat-label">Hand Landmarks</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">~200</span>
+            <span class="stat-label">Ms Latency</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">2</span>
+            <span class="stat-label">Hands Tracked</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="section-inner">
+    <div class="section-label reveal" style="justify-content:center">How It Works</div>
+    <h2 class="reveal reveal-delay-1">Three steps to <span>sound</span></h2>
+    <div class="steps-grid reveal reveal-delay-2">
+      <div class="step-item">
+        <span class="step-num">01</span>
+        <div class="step-title">Capture</div>
+        <p class="step-desc">Your webcam feeds a live video stream to the browser. Frames are captured every 300ms and sent over a WebSocket connection to the Django backend.</p>
+      </div>
+      <div class="step-item">
+        <span class="step-num">02</span>
+        <div class="step-title">Classify</div>
+        <p class="step-desc">MediaPipe extracts 21 3D landmarks per hand. Our TFLite model classifies each hand's gesture — fist, thumb, index, pinky, or combinations — in milliseconds.</p>
+      </div>
+      <div class="step-item">
+        <span class="step-num">03</span>
+        <div class="step-title">Play</div>
+        <p class="step-desc">The two-hand gesture pair is matched against 24 chord mappings. A match triggers the corresponding audio sample — major, minor, flat, or sharp — instantly.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FUTURE -->
+<section id="future">
+  <div class="section-inner">
+    <div class="section-header">
+      <div>
+        <div class="section-label reveal">The Roadmap</div>
+        <h2 class="reveal reveal-delay-1">Where we're <span>going</span></h2>
+      </div>
+      <p class="reveal reveal-delay-2">
+        Acoustic Hands is just the beginning. We're building toward a world where 
+        any person can create music with nothing but their body and a camera.
+      </p>
+    </div>
+
+    <div class="roadmap">
+      <div class="roadmap-item reveal">
+        <div class="roadmap-tag">Coming Soon</div>
+        <div class="roadmap-title">Multi-Instrument Support</div>
+        <p class="roadmap-desc">Beyond guitar — piano scales, drum patterns, and string instruments controlled through different hand gestures and wrist orientations.</p>
+        <div class="roadmap-icon">🎹</div>
+      </div>
+      <div class="roadmap-item reveal reveal-delay-1">
+        <div class="roadmap-tag">In Research</div>
+        <div class="roadmap-title">Hardware Glove Device</div>
+        <p class="roadmap-desc">A lightweight wearable with embedded IMU sensors and Bluetooth, cutting latency from ~200ms to under 10ms for live performance use.</p>
+        <div class="roadmap-icon">🖐️</div>
+      </div>
+      <div class="roadmap-item reveal reveal-delay-2">
+        <div class="roadmap-tag">Planned</div>
+        <div class="roadmap-title">Chord Progression Builder</div>
+        <p class="roadmap-desc">Record gesture sequences and loop them. Build full chord progressions with your hands, layered and exported as MIDI or audio files.</p>
+        <div class="roadmap-icon">🎼</div>
+      </div>
+      <div class="roadmap-item reveal reveal-delay-3">
+        <div class="roadmap-tag">Vision</div>
+        <div class="roadmap-title">Accessibility First</div>
+        <p class="roadmap-desc">Designed for musicians with physical disabilities — a world where the barrier to making music is as low as pointing a camera at your hand.</p>
+        <div class="roadmap-icon">♿</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta">
+  <div class="section-inner">
+    <div class="cta-tag reveal">Ready to Play</div>
+    <h2 class="reveal reveal-delay-1">
+      Your hands.<br>
+      <span>Your music.</span>
+    </h2>
+    <p class="reveal reveal-delay-2">
+      No guitar. No lessons. No hardware. 
+      Just open your hands in front of a camera and start playing.
+    </p>
+    <a href="/app/" class="play-btn reveal reveal-delay-3">
+      <span>Launch Acoustic Hands</span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+    </a>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">Acoustic Hands</div>
+  <p>Built with MediaPipe · TensorFlow Lite · Django Channels</p>
+</footer>
+
+<script>
+// Custom cursor
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursor-ring');
+let mouseX = 0, mouseY = 0, ringX = 0, ringY = 0;
+
+document.addEventListener('mousemove', (e) => {
+  mouseX = e.clientX; mouseY = e.clientY;
+  cursor.style.left = mouseX + 'px';
+  cursor.style.top = mouseY + 'px';
+});
+
+function animateRing() {
+  ringX += (mouseX - ringX) * 0.12;
+  ringY += (mouseY - ringY) * 0.12;
+  ring.style.left = ringX + 'px';
+  ring.style.top = ringY + 'px';
+  requestAnimationFrame(animateRing);
+}
+animateRing();
+
+document.querySelectorAll('a, button').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    cursor.style.transform = 'translate(-50%, -50%) scale(2)';
+    ring.style.transform = 'translate(-50%, -50%) scale(1.5)';
+    ring.style.borderColor = 'rgba(201,168,76,0.6)';
+  });
+  el.addEventListener('mouseleave', () => {
+    cursor.style.transform = 'translate(-50%, -50%) scale(1)';
+    ring.style.transform = 'translate(-50%, -50%) scale(1)';
+    ring.style.borderColor = 'rgba(201,168,76,0.4)';
+  });
+});
+
+// Scroll reveal
+const reveals = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.1 });
+reveals.forEach(el => observer.observe(el));
+
+// Smooth nav highlight
+window.addEventListener('scroll', () => {
+  const nav = document.querySelector('nav');
+  if (window.scrollY > 50) {
+    nav.style.background = 'rgba(10,10,15,0.95)';
+    nav.style.backdropFilter = 'blur(20px)';
+  } else {
+    nav.style.background = 'linear-gradient(to bottom, rgba(10,10,15,0.95), transparent)';
+  }
+});
+</script>
+</body>
+</html>
